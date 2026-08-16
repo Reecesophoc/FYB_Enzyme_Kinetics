@@ -6,7 +6,7 @@ An interactive tool to understand enzyme–substrate interactions.
 
 Once GitHub Pages is enabled for this repository, the interactive is served at:
 
-**https://reecesophoc.github.io/fyb_enzyme_kinetics/**
+**https://reecesophoc.github.io/FYB_Enzyme_Kinetics/**
 
 ## About
 
