@@ -6,7 +6,7 @@ An interactive tool to understand enzyme–substrate interactions.
 
 Once GitHub Pages is enabled for this repository, the interactive is served at:
 
-**https://reecesophoc.github.io/fyb_enzyme_kinetics/**
+**https://reecesophoc.github.io/FYB_Enzyme_Kinetics/**
 
 ## About
 
@@ -31,5 +31,8 @@ repository root to GitHub Pages.
 **One-time setup:** go to **Settings → Pages** and set **Source** to **GitHub Actions**.
 After that, the workflow runs on each push to `main` — no branch or folder to pick, and no manual
 redeploys. (You can also trigger it by hand from the **Actions** tab via *Run workflow*.)
+
+The site is served at **https://reecesophoc.github.io/FYB_Enzyme_Kinetics/** — note the path is
+case-sensitive and matches the repository name exactly.
 
 _Designed by Dr Reece Sophocleous · The University of Sydney — First Year Biology._
