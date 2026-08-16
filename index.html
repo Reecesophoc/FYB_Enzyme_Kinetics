@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enzyme Kinetics — Measuring Reaction Rate | BIOL1XX7</title>
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#161b26;
+    --panel-2:#1b2233;
+    --line:#2a3346;
+    --red:#D9432A;
+    --amber:#F2C14E;
+    --blue:#4FA3E3;
+    --green:#6BBF8A;
+    --text:#e7ebf3;
+    --muted:#9aa6b8;
+    --muted-2:#6f7c92;
+    --serif:Cambria,Georgia,"Times New Roman",serif;
+    --sans:Calibri,"Segoe UI",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  body{padding:22px;min-height:100vh;}
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+  .titleblock h1{font-family:var(--serif);font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:.2px;}
+  .titleblock p{margin:0;color:var(--muted);font-size:14px;max-width:640px;line-height:1.45;}
+  .pill{display:inline-block;background:var(--red);color:#fff;font-weight:700;font-size:12px;
+    letter-spacing:.5px;padding:5px 12px;border-radius:20px;margin-bottom:10px;}
+
+  .layout{display:grid;grid-template-columns:1fr 340px;gap:18px;}
+  @media (max-width:920px){.layout{grid-template-columns:1fr;}}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .plotcard{padding:14px 14px 8px;}
+  canvas{width:100%;display:block;border-radius:8px;}
+
+  .controls h2{font-family:var(--serif);font-size:16px;margin:0 0 2px;font-weight:700;}
+  .controls .sub{color:var(--muted-2);font-size:12px;margin:0 0 14px;}
+
+  .ctrl{margin-bottom:16px;}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .ctrl label{font-size:13px;font-weight:600;color:var(--text);}
+  .ctrl .val{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);}
+  input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:4px;background:var(--panel-2);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+    background:var(--red);cursor:pointer;border:2px solid #fff2;box-shadow:0 0 0 1px #0006;}
+  input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--red);
+    cursor:pointer;border:2px solid #fff2;}
+  input[type=range].blue::-webkit-slider-thumb{background:var(--blue);}
+  input[type=range].blue::-moz-range-thumb{background:var(--blue);}
+  .hint{font-size:11.5px;color:var(--muted-2);margin-top:6px;line-height:1.4;}
+
+  .btnrow{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  button{font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--text);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;
+    transition:background .15s,border-color .15s;}
+  button:hover{background:#26304400;border-color:var(--red);}
+  button.primary{background:var(--red);border-color:var(--red);color:#fff;}
+  button.primary:hover{filter:brightness(1.08);}
+
+  .toggles{display:flex;flex-direction:column;gap:8px;margin-bottom:6px;}
+  .tog{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);cursor:pointer;}
+  .tog input{accent-color:var(--red);width:15px;height:15px;cursor:pointer;}
+  .sw{width:12px;height:3px;border-radius:2px;display:inline-block;}
+
+  .readouts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}
+  .ro{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;}
+  .ro .k{font-size:10.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px;}
+  .ro .v{font-family:var(--serif);font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .ro.full{grid-column:1/3;}
+  .ro .v small{font-size:12px;color:var(--muted);font-family:var(--sans);font-weight:600;}
+
+  .teach{background:linear-gradient(180deg,#1c2436,#171d2b);border:1px solid var(--line);
+    border-left:none;border-radius:12px;padding:14px 16px;margin-top:18px;}
+  .teach h3{font-family:var(--serif);font-size:15px;margin:0 0 6px;color:var(--amber);}
+  .teach p{margin:0;font-size:13.5px;color:var(--text);line-height:1.5;}
+  .teach p b{color:#fff;}
+
+  footer{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  footer .disc{font-size:11px;color:var(--muted-2);max-width:640px;line-height:1.45;}
+  footer .wm{font-size:11px;color:var(--muted-2);text-align:right;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="titleblock">
+      <span class="pill">BIOL1XX7</span>
+      <h1>Enzyme Kinetics: Measuring Reaction Rate</h1>
+      <p>Enzyme activity is tracked by the amount of <b>product formed over time</b>. Explore why the curve
+      bends, why we always use the <b>initial rate</b>, and how the <b>amount of enzyme</b> and
+      <b>amount of substrate</b> each change the result.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="card plotcard">
+      <canvas id="plot" width="760" height="470"></canvas>
+    </div>
+
+    <div class="card controls">
+      <h2>Set up the assay</h2>
+      <p class="sub">Adjust the reaction, then watch the product build up.</p>
+
+      <div class="btnrow">
+        <button id="play" class="primary">▶ Run assay</button>
+        <button id="pin">📌 Pin curve</button>
+        <button id="clearpin">Clear pinned</button>
+      </div>
+
+      <div class="ctrl">
+        <div class="row"><label>Enzyme concentration [E]</label><span class="val" id="eVal"></span></div>
+        <input type="range" id="eSlider" min="1" max="10" step="0.5" value="4">
+        <div class="hint">More enzyme → steeper start. Doubling [E] roughly <b>doubles</b> the initial rate.</div>
+      </div>
+
+      <div class="ctrl">
+        <div class="row"><label>Substrate concentration [S]</label><span class="val" id="sVal"></span></div>
+        <input type="range" id="sSlider" min="5" max="100" step="1" value="60">
+        <div class="hint" id="satHint"></div>
+      </div>
+
+      <div class="ctrl">
+        <div class="row"><label class="blue">Measurement window (Δt)</label><span class="val" id="wVal"></span></div>
+        <input type="range" id="wSlider" class="blue" min="2" max="45" step="1" value="6">
+        <div class="hint">The average rate ΔP/Δt is measured from t=0 to here.</div>
+      </div>
+
+      <div class="toggles">
+        <label class="tog"><input type="checkbox" id="tTangent" checked>
+          <span class="sw" style="background:var(--amber)"></span> True initial rate (tangent, v₀)</label>
+        <label class="tog"><input type="checkbox" id="tChord" checked>
+          <span class="sw" style="background:var(--blue)"></span> Measured average rate (chord)</label>
+      </div>
+
+      <div class="readouts">
+        <div class="ro"><div class="k">True initial rate v₀</div><div class="v" id="roV0"></div></div>
+        <div class="ro"><div class="k">Measured ΔP/Δt</div><div class="v" id="roMeas"></div></div>
+        <div class="ro full"><div class="k">Measured rate vs true v₀</div><div class="v" id="roUnder"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="teach">
+    <h3 id="teachTitle"></h3>
+    <p id="teachBody"></p>
+  </div>
+
+  <footer>
+    <div class="disc"><b>Simplified for teaching.</b> This models a single-substrate reaction whose rate depends
+    on how much substrate remains (Michaelis–Menten with substrate depletion). Real assays are also affected by
+    the reverse reaction, product inhibition, and enzyme denaturation over time — these are left out so the core
+    idea stays clear. Units are illustrative.</div>
+    <div class="wm">Designed by Dr Reece Sophocleous · The University of Sydney<br>First Year Biology — Enzyme Kinetics</div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const cv=document.getElementById('plot'), ctx=cv.getContext('2d');
+  const css=getComputedStyle(document.documentElement);
+  const C={
+    red:css.getPropertyValue('--red').trim(),
+    amber:css.getPropertyValue('--amber').trim(),
+    blue:css.getPropertyValue('--blue').trim(),
+    green:css.getPropertyValue('--green').trim(),
+    text:css.getPropertyValue('--text').trim(),
+    muted:css.getPropertyValue('--muted').trim(),
+    line:css.getPropertyValue('--line').trim(),
+    panel:css.getPropertyValue('--panel').trim()
+  };
+
+  // ---- model constants ----
+  const KM=8, KCAT=1.2, TMAX=60, SMAX=100, STEPS=600, DT=TMAX/STEPS;
+
+  // ---- state ----
+  const st={E:4,S0:60,win:6,tangent:true,chord:true,playing:false,playT:1,ref:null};
+
+  function simulate(E,S0){
+    const Vmax=KCAT*E;
+    const pts=new Float64Array(STEPS+1);
+    let P=0;
+    pts[0]=0;
+    for(let i=1;i<=STEPS;i++){
+      // RK4 on dP/dt = Vmax*S/(Km+S), S=S0-P
+      const f=p=>{const S=Math.max(0,S0-p);return Vmax*S/(KM+S);};
+      const k1=f(P), k2=f(P+DT*k1/2), k3=f(P+DT*k2/2), k4=f(P+DT*k3);
+      P=Math.min(S0, P+DT*(k1+2*k2+2*k3+k4)/6);
+      pts[i]=P;
+    }
+    const v0=Vmax*S0/(KM+S0);
+    return {pts,v0,Vmax,S0,E};
+  }
+
+  function Pat(sim,t){ // linear interp product at time t
+    const x=Math.max(0,Math.min(TMAX,t))/DT;
+    const i=Math.floor(x), fr=x-i;
+    if(i>=STEPS) return sim.pts[STEPS];
+    return sim.pts[i]*(1-fr)+sim.pts[i+1]*fr;
+  }
+
+  // ---- geometry ----
+  let W,H,dpr,PL,PR,PT,PB,plotW,plotH;
+  function resize(){
+    dpr=window.devicePixelRatio||1;
+    const rect=cv.getBoundingClientRect();
+    W=rect.width; H=W*(470/760);
+    cv.width=W*dpr; cv.height=H*dpr;
+    cv.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    PL=64; PR=18; PT=22; PB=52;
+    plotW=W-PL-PR; plotH=H-PT-PB;
+  }
+  const xPix=t=>PL+(t/TMAX)*plotW;
+  const yPix=p=>PT+plotH-(p/SMAX)*plotH;
+
+  function draw(){
+    const sim=st.sim;
+    ctx.clearRect(0,0,W,H);
+    // grid
+    ctx.strokeStyle=C.line; ctx.fillStyle=C.muted; ctx.lineWidth=1;
+    ctx.font='11px Calibri, sans-serif';
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    for(let p=0;p<=SMAX;p+=20){
+      const y=yPix(p);
+      ctx.globalAlpha=p===0?0.55:0.16; ctx.beginPath();
+      ctx.moveTo(PL,y); ctx.lineTo(PL+plotW,y); ctx.stroke();
+      ctx.globalAlpha=1; ctx.fillText(p,PL-9,y);
+    }
+    ctx.textAlign='center'; ctx.textBaseline='top';
+    for(let t=0;t<=TMAX;t+=10){
+      const x=xPix(t);
+      ctx.globalAlpha=0.16; ctx.beginPath();
+      ctx.moveTo(x,PT); ctx.lineTo(x,PT+plotH); ctx.stroke();
+      ctx.globalAlpha=1; ctx.fillText(t,x,PT+plotH+8);
+    }
+    // axis titles
+    ctx.fillStyle=C.text; ctx.font='12.5px Calibri, sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('Time (min)',PL+plotW/2,H-18);
+    ctx.save();
+    ctx.translate(16,PT+plotH/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText('[product] formed (mM)',0,0);
+    ctx.restore();
+
+    // measurement window shading
+    const tw=st.win, Pw=Pat(sim,tw);
+    ctx.fillStyle='rgba(79,163,227,0.07)';
+    ctx.fillRect(PL,PT,xPix(tw)-PL,plotH);
+
+    // pinned reference curve
+    if(st.ref){
+      drawCurve(st.ref,1,C.green,2,[6,5]);
+    }
+
+    // main product curve (progressive when playing)
+    const frac=st.playing?st.playT:1;
+    drawCurve(sim,frac,C.red,2.6,null);
+
+    // tangent (true initial rate): P = v0 * t
+    if(st.tangent){
+      const tEnd=Math.min(TMAX, SMAX/sim.v0); // where tangent would hit y-max
+      ctx.strokeStyle=C.amber; ctx.lineWidth=1.8; ctx.setLineDash([7,5]);
+      ctx.beginPath(); ctx.moveTo(xPix(0),yPix(0));
+      ctx.lineTo(xPix(tEnd),yPix(sim.v0*tEnd)); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    // chord (measured average rate): origin -> (tw, Pw)
+    if(st.chord){
+      ctx.strokeStyle=C.blue; ctx.lineWidth=2; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(xPix(0),yPix(0)); ctx.lineTo(xPix(tw),yPix(Pw)); ctx.stroke();
+      // window marker
+      ctx.strokeStyle='rgba(79,163,227,0.5)'; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(xPix(tw),PT); ctx.lineTo(xPix(tw),PT+plotH); ctx.stroke();
+      ctx.setLineDash([]);
+      dot(xPix(tw),yPix(Pw),C.blue);
+    }
+    // playhead dot
+    if(st.playing){
+      const tp=frac*TMAX, Pp=Pat(sim,tp);
+      dot(xPix(tp),yPix(Pp),C.red,5);
+    }
+    dot(xPix(0),yPix(0),C.text,3);
+
+    // legend
+    legend();
+  }
+
+  function drawCurve(sim,frac,color,wpx,dash){
+    ctx.strokeStyle=color; ctx.lineWidth=wpx;
+    ctx.setLineDash(dash||[]);
+    ctx.beginPath();
+    const last=Math.round(STEPS*frac);
+    for(let i=0;i<=last;i++){
+      const t=i*DT, x=xPix(t), y=yPix(sim.pts[i]);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  function dot(x,y,color,r){ r=r||4;
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1; ctx.stroke();
+  }
+  function legend(){
+    const items=[['Product curve',C.red,false]];
+    if(st.tangent) items.push(['True initial rate v₀',C.amber,true]);
+    if(st.chord) items.push(['Measured ΔP/Δt',C.blue,false]);
+    if(st.ref) items.push(['Pinned reference',C.green,true]);
+    ctx.font='11.5px Calibri, sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+    let x=PL+14, y=PT+14;
+    const bw=Math.max(...items.map(it=>ctx.measureText(it[0]).width))+34;
+    ctx.fillStyle='rgba(13,17,23,0.72)';
+    roundRect(x-8,y-11,bw,items.length*19+4,7); ctx.fill();
+    items.forEach((it,k)=>{
+      const yy=y+k*19;
+      ctx.strokeStyle=it[1]; ctx.lineWidth=2.4; ctx.setLineDash(it[2]?[5,4]:[]);
+      ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+20,yy); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=C.text; ctx.fillText(it[0],x+26,yy);
+    });
+  }
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  }
+
+  // ---- readouts + teaching text ----
+  function fmt(x,d){return x.toFixed(d===undefined?1:d);}
+  function update(){
+    st.sim=simulate(st.E,st.S0);
+    const sim=st.sim;
+    const Pw=Pat(sim,st.win), meas=Pw/st.win, ratio=meas/sim.v0;
+    document.getElementById('eVal').textContent=fmt(st.E,1)+' units';
+    document.getElementById('sVal').textContent=st.S0+' mM';
+    document.getElementById('wVal').textContent='0 – '+st.win+' min';
+    document.getElementById('roV0').innerHTML=fmt(sim.v0,2)+' <small>mM/min</small>';
+    document.getElementById('roMeas').innerHTML=fmt(meas,2)+' <small>mM/min</small>';
+    const pct=Math.round(ratio*100);
+    document.getElementById('roUnder').innerHTML=pct+'% <small>of true rate ('+(100-pct)+'% underestimate)</small>';
+
+    // saturation hint
+    const vFrac=sim.S0/(KM+sim.S0);
+    const sat=document.getElementById('satHint');
+    if(vFrac>0.88){
+      sat.innerHTML='Substrate is <b>saturating</b> — the enzyme is nearly flat-out, so adding more [S] raises total product but barely speeds the start.';
+    } else if(vFrac<0.55){
+      sat.innerHTML='Substrate is <b>limiting</b> — most active sites are empty, so raising [S] speeds the initial rate a lot.';
+    } else {
+      sat.innerHTML='Around half-saturating — raising [S] still noticeably speeds the initial rate.';
+    }
+
+    // teaching caption keyed to measurement window
+    const tt=document.getElementById('teachTitle'), tb=document.getElementById('teachBody');
+    if(ratio>0.9){
+      tt.textContent='This is why we use the initial rate';
+      tb.innerHTML='Early on, almost no substrate has been used up, so product builds at a steady pace and the '+
+        '<b>chord matches the tangent</b>. Measured here, ΔP/Δt is close to the true v₀ — a clean, reproducible number.';
+    } else if(ratio>0.7){
+      tt.textContent='The measurement is starting to drift';
+      tb.innerHTML='Your window now reaches into the <b>bend</b> of the curve. As substrate is consumed the reaction slows, '+
+        'so the average ΔP/Δt (blue) drops <b>'+(100-Math.round(ratio*100))+'% below</b> the true initial rate (amber). '+
+        'Shorten Δt to recover v₀.';
+    } else {
+      tt.textContent='A long window badly underestimates the rate';
+      tb.innerHTML='Over this window the curve has flattened as substrate runs out. The average rate is only '+
+        '<b>'+Math.round(ratio*100)+'%</b> of the true v₀ — measuring over too long a time makes a fast enzyme look slow. '+
+        'This is exactly why kinetics uses the <b>slope at t=0</b>, not an end-point reading.';
+    }
+    draw();
+  }
+
+  // ---- events ----
+  const eS=document.getElementById('eSlider'), sS=document.getElementById('sSlider'), wS=document.getElementById('wSlider');
+  eS.oninput=e=>{st.E=+e.target.value;update();};
+  sS.oninput=e=>{st.S0=+e.target.value;update();};
+  wS.oninput=e=>{st.win=+e.target.value;update();};
+  document.getElementById('tTangent').onchange=e=>{st.tangent=e.target.checked;draw();};
+  document.getElementById('tChord').onchange=e=>{st.chord=e.target.checked;draw();};
+
+  document.getElementById('pin').onclick=()=>{st.ref=simulate(st.E,st.S0);draw();};
+  document.getElementById('clearpin').onclick=()=>{st.ref=null;draw();};
+
+  const playBtn=document.getElementById('play');
+  let raf=null,t0=0;
+  playBtn.onclick=()=>{
+    if(st.playing){stopPlay();return;}
+    st.playing=true; st.playT=0; playBtn.textContent='⏸ Pause'; playBtn.classList.remove('primary');
+    t0=performance.now(); tick();
+  };
+  function stopPlay(){st.playing=false; if(raf)cancelAnimationFrame(raf); playBtn.textContent='▶ Run assay'; playBtn.classList.add('primary'); draw();}
+  function tick(){
+    const el=(performance.now()-t0)/4200; // ~4.2s sweep
+    st.playT=Math.min(1,el);
+    draw();
+    if(st.playT<1){raf=requestAnimationFrame(tick);} else {stopPlay();}
+  }
+
+  window.addEventListener('resize',()=>{resize();draw();});
+  resize(); update();
+})();
+</script>
+</body>
+</html>
