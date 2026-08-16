@@ -22,9 +22,14 @@ Features:
 
 The page is a single HTML file with no external dependencies, so it runs offline and on GitHub Pages as-is.
 
-## Enabling GitHub Pages
+## Deployment
 
-If Pages is not yet turned on: in the repository, go to **Settings → Pages**, set **Source** to
-**Deploy from a branch**, choose branch `main` (or this branch) and folder `/ (root)`, then save.
+Deployment is automated by the GitHub Actions workflow in
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml): every push to `main` publishes the
+repository root to GitHub Pages.
+
+**One-time setup:** go to **Settings → Pages** and set **Source** to **GitHub Actions**.
+After that, the workflow runs on each push to `main` — no branch or folder to pick, and no manual
+redeploys. (You can also trigger it by hand from the **Actions** tab via *Run workflow*.)
 
 _Designed by Dr Reece Sophocleous · The University of Sydney — First Year Biology._
